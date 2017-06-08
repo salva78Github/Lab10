@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 import it.polito.tdp.porto.model.Author;
 import it.polito.tdp.porto.model.Paper;
@@ -64,5 +66,66 @@ public class PortoDAO {
 			 e.printStackTrace();
 			throw new RuntimeException("Errore Db");
 		}
+	}
+	
+	public List<Author> listAutori() {
+		String sql = "select id, lastname, firstname " +
+				"FROM author "+
+				"ORDER BY lastname ASC, firstname ASC" ;
+		
+		Connection conn = DBConnect.getConnection() ;
+		
+		List<Author> result = new ArrayList<>() ;
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				result.add(new Author(res.getInt("id"), res.getString("lastname"), res.getString("firstname"))) ;
+			}
+			
+			conn.close();
+			return result ;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+		
+	}
+	
+	public List<Author> getCoAutori(Author a) {
+		String sql = "SELECT DISTINCT a2.id, a2.lastname, a2.firstname " + 
+				"FROM creator c1, creator c2, author a2 " + 
+				"WHERE c1.eprintid=c2.eprintid " + 
+				"AND c2.authorid=a2.id " + 
+				"AND c1.authorid= ? " + 
+				"AND a2.id <> c1.authorid " + 
+				"ORDER BY a2.lastname ASC, a2.firstname ASC" ;
+		
+		Connection conn = DBConnect.getConnection() ;
+		
+		List<Author> result = new ArrayList<>() ;
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setInt(1, a.getId());
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				result.add(new Author(res.getInt("id"), res.getString("lastname"), res.getString("firstname"))) ;
+			}
+			
+			conn.close();
+			return result ;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null ;
+		}
+
 	}
 }
