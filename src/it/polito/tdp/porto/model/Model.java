@@ -77,6 +77,7 @@ public class Model {
 	 * @param sa
 	 * @throws PortoException
 	 */
+	/*
 	public List<AuthorsPair> getAuthorPairs(Author fa, Author sa) throws PortoException{
 		if (graph == null)
 			throw new PortoException("Grafo non esistente");
@@ -91,7 +92,7 @@ public class Model {
 		System.out.println("<getAuthorPairs> apl size: " + apl.size());	
 		return apl;
 	}
-	
+	*/
 	
 
 }
