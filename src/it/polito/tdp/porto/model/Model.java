@@ -1,11 +1,8 @@
 package it.polito.tdp.porto.model;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-import org.jgrapht.Graph;
-import org.jgrapht.GraphPath;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.graph.DefaultEdge;
@@ -16,7 +13,7 @@ import it.polito.tdp.porto.exception.PortoException;
 
 public class Model {
 
-	private SimpleGraph<Author, DefaultEdge> graph;
+	private SimpleGraph<Author, PortoEdge> graph;
 	private PortoDAO dao;
 	List<Author> authors;
 
@@ -26,18 +23,19 @@ public class Model {
 		this.graph = createGraph();
 	}
 
-	private SimpleGraph<Author, DefaultEdge> createGraph() throws PortoException {
+	private SimpleGraph<Author, PortoEdge> createGraph() throws PortoException {
 
-		graph = new SimpleGraph<Author, DefaultEdge>(DefaultEdge.class);
+		graph = new SimpleGraph<Author, PortoEdge>(PortoEdge.class);
 
 		Graphs.addAllVertices(graph, authors);
 
 		for (Author a : authors) {
 			List<Author> coautori = a.getCoautori();
 			for (Author c : coautori) {
-				graph.addEdge(a, c);
+				graph.addEdge(a, c, new PortoEdge(this.dao.getPapersByAuthors(a, c)));
 			}
 		}
+
 		return graph;
 
 	}
@@ -69,7 +67,7 @@ public class Model {
 	public List<Author> getAutori() throws PortoException {
 		return this.authors;
 	}
-	
+
 	/**
 	 * ricerca cammino minimo + interrogazione db per ogni coppia vertici
 	 * 
@@ -77,22 +75,20 @@ public class Model {
 	 * @param sa
 	 * @throws PortoException
 	 */
-	/*
-	public List<AuthorsPair> getAuthorPairs(Author fa, Author sa) throws PortoException{
+
+	public List<AuthorsPair> getAuthorPairs(Author fa, Author sa) throws PortoException {
 		if (graph == null)
 			throw new PortoException("Grafo non esistente");
-		
-		List<DefaultEdge> path = DijkstraShortestPath.findPathBetween(graph, fa, sa);
-	    List<AuthorsPair> apl = new ArrayList<AuthorsPair>();
-		for(DefaultEdge arch : path){
-	    	List<Paper> papers = this.dao.getPapersByAuthors(graph.getEdgeSource(arch), graph.getEdgeTarget(arch));	    
-	    	AuthorsPair ap = new AuthorsPair(fa, sa, papers);
-	    	apl.add(ap);
-	    }
-		System.out.println("<getAuthorPairs> apl size: " + apl.size());	
+
+		List<PortoEdge> path = DijkstraShortestPath.findPathBetween(graph, fa, sa);
+		List<AuthorsPair> apl = new ArrayList<AuthorsPair>();
+		for (PortoEdge arch : path) {
+			List<Paper> papers = arch.getPapers();
+			AuthorsPair ap = new AuthorsPair(fa, sa, papers);
+			apl.add(ap);
+		}
+		System.out.println("<getAuthorPairs> apl size: " + apl.size());
 		return apl;
 	}
-	*/
-	
 
 }
