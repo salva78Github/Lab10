@@ -8,6 +8,7 @@ public class Author {
 	private final String lastname;
 	private final String firstname;
 	private List<Author> coautori;	
+	private List<Paper> papers;	
 	
 	/**
 	 * @return the coautori
@@ -28,6 +29,20 @@ public class Author {
 	}
 
 
+
+	/**
+	 * @return the papers
+	 */
+	public List<Paper> getPapers() {
+		return papers;
+	}
+
+	/**
+	 * @param papers the papers to set
+	 */
+	public void setPapers(List<Paper> papers) {
+		this.papers = papers;
+	}
 
 	/**
 	 * @param coautori the coautori to set

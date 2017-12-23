@@ -13,26 +13,31 @@ import it.polito.tdp.porto.exception.PortoException;
 
 public class Model {
 
-	private SimpleGraph<Author, PortoEdge> graph;
+	private SimpleGraph<Author, DefaultEdge> graph;
 	private PortoDAO dao;
-	List<Author> authors;
+	private List<Author> authors;
+	private AuthorIdMap authorIdMap ;
+	private List<Paper> papers;
 
 	public Model() throws PortoException {
 		this.dao = new PortoDAO();
-		this.authors = dao.getAuthours();
+		this.authorIdMap = new AuthorIdMap();
+		this.papers = dao.getPapers();
 		this.graph = createGraph();
 	}
 
-	private SimpleGraph<Author, PortoEdge> createGraph() throws PortoException {
+	private SimpleGraph<Author, DefaultEdge> createGraph() throws PortoException {
 
-		graph = new SimpleGraph<Author, PortoEdge>(PortoEdge.class);
+		graph = new SimpleGraph<Author, DefaultEdge>(DefaultEdge.class);
 
-		Graphs.addAllVertices(graph, authors);
+		Graphs.addAllVertices(graph, getAutori());
 
 		for (Author a : authors) {
 			List<Author> coautori = a.getCoautori();
 			for (Author c : coautori) {
-				graph.addEdge(a, c, new PortoEdge(this.dao.getPapersByAuthors(a, c)));
+				c.setCoautori(this.authorIdMap.get(c.getId()).getCoautori());
+				c.setPapers(this.authorIdMap.get(c.getId()).getPapers());
+				graph.addEdge(a, c);
 			}
 		}
 
@@ -65,6 +70,10 @@ public class Model {
 	}
 
 	public List<Author> getAutori() throws PortoException {
+		
+		if(this.authors==null) {
+			this.authors = dao.getAuthours(authorIdMap) ;
+		}
 		return this.authors;
 	}
 
@@ -75,15 +84,31 @@ public class Model {
 	 * @param sa
 	 * @throws PortoException
 	 */
-
 	public List<AuthorsPair> getAuthorPairs(Author fa, Author sa) throws PortoException {
 		if (graph == null)
 			throw new PortoException("Grafo non esistente");
 
-		List<PortoEdge> path = DijkstraShortestPath.findPathBetween(graph, fa, sa);
+		List<DefaultEdge> path = DijkstraShortestPath.findPathBetween(graph, fa, sa);
 		List<AuthorsPair> apl = new ArrayList<AuthorsPair>();
-		for (PortoEdge arch : path) {
-			List<Paper> papers = arch.getPapers();
+		for (DefaultEdge arch : path) {
+			List<Paper> papers = new ArrayList<Paper>();
+			Author a1 = graph.getEdgeSource(arch);
+			Author a2 = graph.getEdgeTarget(arch);
+			if(a1.getPapers().size()>a2.getPapers().size()){
+				for(Paper p : a2.getPapers()){
+					if(a1.getPapers().contains(p)){
+						papers.add(p);
+					}
+				}
+			}
+			else{
+				for(Paper p : a1.getPapers()){
+					if(a2.getPapers().contains(p)){
+						papers.add(p);
+					}
+				}				
+			}
+			
 			AuthorsPair ap = new AuthorsPair(fa, sa, papers);
 			apl.add(ap);
 		}

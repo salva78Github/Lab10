@@ -11,6 +11,7 @@ import it.polito.tdp.porto.exception.AuthorNotFoundException;
 import it.polito.tdp.porto.exception.PaperNotFoundException;
 import it.polito.tdp.porto.exception.PortoException;
 import it.polito.tdp.porto.model.Author;
+import it.polito.tdp.porto.model.AuthorIdMap;
 import it.polito.tdp.porto.model.Paper;
 
 public class PortoDAO {
@@ -80,7 +81,7 @@ public class PortoDAO {
 		}
 	}
 	
-	public List<Author> getAuthours() throws PortoException {
+	public List<Author> getAuthours(AuthorIdMap authorIdMap) throws PortoException {
 		Connection conn=null;
 		PreparedStatement st =null;
 		ResultSet rs = null;
@@ -99,7 +100,10 @@ public class PortoDAO {
 				int authorId = author.getId();
 				System.out.println("<getCoautori> id: " + authorId);
 				author.setCoautori(getCoautori(authorId));
+				author.setPapers(getPapersByAuthor(authorId));
+				author = authorIdMap.put(author);
 				authors.add(author);
+				
 			}
 
 			System.out.println("<getAuthours> numero di autori: " + authors.size());
@@ -113,6 +117,41 @@ public class PortoDAO {
 		}
 	}
 	
+	private List<Paper> getPapersByAuthor(int authorId) throws PortoException {
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		final String query = "SELECT p.eprintid, title, issn, publication, type, types " +
+							 "FROM creator c1, paper p " + 
+							 "WHERE p.eprintid=c1.eprintid " +
+							 "AND c1.authorid = ?";
+		List<Paper> papers = new ArrayList<Paper>();
+		
+		try {
+			c=DBConnect.getConnection();
+			ps=c.prepareStatement(query);
+			ps.setInt(1, authorId);
+			rs=ps.executeQuery();
+			
+			while(rs.next()){
+				Paper p = new Paper(rs.getInt("p.eprintid"), rs.getString("title"), rs.getString("issn"), 
+						rs.getString("publication"), rs.getString("type"), rs.getString("types"));
+				System.out.println("<getPapersByAuthor> " + p);
+				papers.add(p);
+			}
+			
+			
+			return papers;
+			
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			throw new PortoException("Errore Db", sqle);
+		} finally {
+			DBConnect.closeResources(c, ps, rs);
+		}
+	}
+
 	public List<Paper> getPapersByAuthors(Author a1, Author a2) throws PortoException{
 		Connection c = null;
 		PreparedStatement ps = null;
@@ -198,6 +237,76 @@ public class PortoDAO {
 			DBConnect.closeResources(conn, st, rs);
 		}
 
+	}
+
+	public List<Paper> getPapers() throws PortoException {
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		final String query = "SELECT p.eprintid, title, issn, publication, type, types " +
+							 "FROM paper p";
+		List<Paper> papers = new ArrayList<Paper>();
+		
+		try {
+			c=DBConnect.getConnection();
+			ps=c.prepareStatement(query);
+			rs=ps.executeQuery();
+			
+			while(rs.next()){
+				Paper p = new Paper(rs.getInt("p.eprintid"), rs.getString("title"), rs.getString("issn"), 
+						rs.getString("publication"), rs.getString("type"), rs.getString("types"));
+				p.setAuthors(getAuthors(p.getEprintid()));
+				System.out.println("<getPapers> " + p);
+				papers.add(p);
+			}
+			
+			
+			return papers;
+			
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			throw new PortoException("Errore Db", sqle);
+		} finally {
+			DBConnect.closeResources(c, ps, rs);
+		}
+
+	}
+
+	private List<Author> getAuthors(int eprintid) throws PortoException {
+		Connection conn=null;
+		PreparedStatement st =null;
+		ResultSet rs = null;
+
+		final String sql = "SELECT DISTINCT a.id, lastname, firstname " +
+						   "FROM creator c, author a " +
+						   "WHERE c.authorid = a.id " + 
+						   "AND c.eprintid = ? " +
+						   "ORDER BY lastname, firstname";
+		
+		List<Author> auhtors = new ArrayList<Author>();
+		
+		try {
+			conn = DBConnect.getConnection();
+			st = conn.prepareStatement(sql);
+			st.setInt(1, eprintid);
+			
+			rs = st.executeQuery();
+
+			while (rs.next()) {
+				Author author = new Author(rs.getInt("id"), rs.getString("lastname"), rs.getString("firstname"));
+				auhtors.add(author);
+			}
+
+			System.out.println("<getAuthors> numero di autori: " + auhtors.size());
+			return auhtors;
+
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			throw new PortoException("Errore Db", sqle);
+		} finally {
+			DBConnect.closeResources(conn, st, rs);
+		}
 	}
 	
 }
