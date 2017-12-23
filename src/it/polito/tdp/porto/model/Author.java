@@ -49,7 +49,7 @@ public class Author {
 
 	@Override
 	public String toString() {
-		return "Author [id=" + id + ", lastname=" + lastname + ", firstname=" + firstname + "]";
+		return lastname + " " + firstname;
 	}
 
 	/* (non-Javadoc)

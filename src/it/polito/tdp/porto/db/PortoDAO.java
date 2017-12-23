@@ -112,6 +112,49 @@ public class PortoDAO {
 			DBConnect.closeResources(conn, st, rs);
 		}
 	}
+	
+	public List<Paper> getPapersByAuthors(Author a1, Author a2) throws PortoException{
+		Connection c = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		final String query = "SELECT p.eprintid, title, issn, publication, type, types " +
+							 "FROM creator c1, creator c2, paper p " +
+							 "WHERE c1.eprintid=c2.eprintid " +
+							 "AND c1.authorid = ? " +
+							 "AND c2.authorid = ? " +
+							 "AND p.eprintid=c1.eprintid";
+		List<Paper> papers = new ArrayList<Paper>();
+		
+		try {
+			c=DBConnect.getConnection();
+			ps=c.prepareStatement(query);
+			ps.setInt(1, a1.getId());
+			ps.setInt(2, a2.getId());
+			rs=ps.executeQuery();
+			
+			while(rs.next()){
+				Paper p = new Paper(rs.getInt("p.eprintid"), rs.getString("title"), rs.getString("issn"), 
+						rs.getString("publication"), rs.getString("type"), rs.getString("types"));
+				System.out.println("<getPapersByAuthors> " + p);
+				papers.add(p);
+			}
+			
+			
+			return papers;
+			
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			throw new PortoException("Errore Db", sqle);
+		} finally {
+			DBConnect.closeResources(c, ps, rs);
+		}
+		
+		
+		
+	}
+	
+	
 
 	public List<Author> getCoautori(int id) throws PortoException {
 		Connection conn=null;

@@ -13,7 +13,7 @@ public class TestModel {
 			Model model = new Model();
 			List<Author> coautori = model.getCoautori(new Author(719,"Milanese","Mario"));
 			System.out.println(coautori);
-			
+			model.getAuthorPairs(new Author(719,"Milanese","Mario"), new Author(2532,"Osello","Anna"));
 			
 		} catch (PortoException e) {
 			// TODO Auto-generated catch block

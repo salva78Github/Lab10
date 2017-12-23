@@ -6,7 +6,9 @@ import java.util.ResourceBundle;
 
 import it.polito.tdp.porto.exception.PortoException;
 import it.polito.tdp.porto.model.Author;
+import it.polito.tdp.porto.model.AuthorsPair;
 import it.polito.tdp.porto.model.Model;
+import it.polito.tdp.porto.model.Paper;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -24,7 +26,7 @@ public class PortoController {
     private ComboBox<Author> boxPrimo;
 
     @FXML
-    private ComboBox<?> boxSecondo;
+    private ComboBox<Author> boxSecondo;
 
     @FXML
     private TextArea txtResult;
@@ -43,6 +45,8 @@ public class PortoController {
 				this.txtResult.appendText(a.getFirstname() + " " + a.getLastname() + "\n");
 			}
 			
+			this.boxSecondo.getItems().addAll(this.model.getNoCoautori(autore));
+			
 		} catch (PortoException pe) {
 			pe.printStackTrace();
 			this.txtResult.setText("Errore nel caricamento della lista dei coautori: " + pe.getMessage());
@@ -51,7 +55,27 @@ public class PortoController {
 
     @FXML
     void handleSequenza(ActionEvent event) {
-
+    	this.txtResult.setText("");
+    	Author a1 = boxPrimo.getValue();
+    	Author a2 = boxSecondo.getValue();
+    	try {
+			List<AuthorsPair> apl = model.getAuthorPairs(a1, a2);
+			this.txtResult.setText("Lista articoli degli autori " + a1 + " e " + a2 + "\n");
+			for(AuthorsPair ap : apl){
+				List<Paper> pl = ap.getPapers();
+				for(Paper p : pl){
+					this.txtResult.appendText(p.getTitle() + " ***");
+				}
+				this.txtResult.appendText("\n");
+			}
+			
+			
+		} catch (PortoException pe) {
+			pe.printStackTrace();
+			this.txtResult.setText("Errore nel caricamento della lista dei coautori: " + pe.getMessage());
+		}
+    	
+    	
     }
 
     @FXML
